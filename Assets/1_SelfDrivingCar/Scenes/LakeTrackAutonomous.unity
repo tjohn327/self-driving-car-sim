@@ -438,6 +438,14 @@ Prefab:
       propertyPath: m_LocalPosition.z
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 11400002, guid: 0e7ee4df08df88c4880f43398f9ad2c2, type: 2}
+      propertyPath: m_SpeedType
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400002, guid: 0e7ee4df08df88c4880f43398f9ad2c2, type: 2}
+      propertyPath: m_Topspeed
+      value: 50
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 0e7ee4df08df88c4880f43398f9ad2c2, type: 2}
   m_IsPrefabParent: 0
@@ -6131,6 +6139,15 @@ Prefab:
       propertyPath: m_RootOrder
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 114000011874370104, guid: 1f347eea738f54024b45de3f0811b76a,
+        type: 2}
+      propertyPath: url
+      value: 7.0.0.1:4567/socket.io/?EIO=4&transport=websocketbsocket
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000013725567998, guid: 1f347eea738f54024b45de3f0811b76a, type: 2}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 1f347eea738f54024b45de3f0811b76a, type: 2}
   m_IsPrefabParent: 0
@@ -6510,6 +6527,48 @@ BoxCollider:
 Transform:
   m_PrefabParentObject: {fileID: 400000, guid: c92bea14e5c4591408be760558da7b90, type: 3}
   m_PrefabInternal: {fileID: 1079401902}
+--- !u!1 &1120961182
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 1120961184}
+  - component: {fileID: 1120961183}
+  m_Layer: 0
+  m_Name: UDPIO
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1120961183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1120961182}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b9f0ddac26f5b643902320fec86e81c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  CarRemoteControl: {fileID: 1054927742}
+  FrontFacingCamera: {fileID: 1506256752}
+--- !u!4 &1120961184
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1120961182}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1121373681
 Prefab:
   m_ObjectHideFlags: 0
@@ -10285,6 +10344,22 @@ Prefab:
       propertyPath: isTraining
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1904088287206378, guid: 96664f82c8df0114a92fe864c83a9a48, type: 2}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000011246254900, guid: 96664f82c8df0114a92fe864c83a9a48, type: 2}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474863895722678, guid: 96664f82c8df0114a92fe864c83a9a48, type: 2}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000010384685292, guid: 96664f82c8df0114a92fe864c83a9a48, type: 2}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 96664f82c8df0114a92fe864c83a9a48, type: 2}
   m_IsPrefabParent: 0
@@ -10649,6 +10724,10 @@ Prefab:
       propertyPath: FrontFacingCamera
       value: 
       objectReference: {fileID: 1506256752}
+    - target: {fileID: 1000010233680934, guid: 16328d84059a4491da82863ec16eb6a1, type: 2}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 16328d84059a4491da82863ec16eb6a1, type: 2}
   m_IsPrefabParent: 0

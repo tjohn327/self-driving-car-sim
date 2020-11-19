@@ -4,8 +4,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
-
-
+using UnityEngine.SceneManagement;
 
 namespace UnityStandardAssets.Vehicles.Car
 {
@@ -145,7 +144,15 @@ namespace UnityStandardAssets.Vehicles.Car
             m_MaxHandbrakeTorque = float.MaxValue;
 
             m_Rigidbody = GetComponent<Rigidbody> ();
+
             m_CurrentTorque = m_FullTorqueOverAllWheels - (m_TractionControl * m_FullTorqueOverAllWheels);
+
+        }
+
+        public void Reset()
+        {
+            string scene = SceneManager.GetActiveScene().name;
+            SceneManager.LoadScene(scene);
         }
 
         private void GearChanging ()
@@ -200,7 +207,7 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
         public void Update()
-        {
+        {                      
             if (IsRecording)
             {
                 //Dump();

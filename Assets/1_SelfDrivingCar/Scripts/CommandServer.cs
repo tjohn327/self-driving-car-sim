@@ -45,7 +45,7 @@ public class CommandServer : MonoBehaviour
 		JSONObject jsonObject = obj.data;
 		//    print(float.Parse(jsonObject.GetField("steering_angle").str));
 		CarRemoteControl.SteeringAngle = float.Parse(jsonObject.GetField("steering_angle").str);
-		CarRemoteControl.Acceleration = float.Parse(jsonObject.GetField("throttle").str);
+		CarRemoteControl.Acceleration = float.Parse(jsonObject.GetField("throttle").str);        
 		EmitTelemetry(obj);
 	}
 
