@@ -12,8 +12,8 @@ Control message example:
 
 ```json
 {
-    “steering_angle” : 0.9,
-    “throttle”       : 0.8
+   "steering_angle":0.9,
+   "throttle":0.8
 }
 ```
 
@@ -21,10 +21,10 @@ Telemetry message example:
 
 ```json
 {
-    “steering_angle”    : 25,
-    “throttle”          : 1,
-    “speed”             : 30,
-    “image”             : (image from front facing camera as base64 encoded string)
+   "steering_angle":25,
+   "throttle":1,
+   "speed":30,
+   "image":"image from front facing camera as base64 encoded string"
 }
 ```
 
