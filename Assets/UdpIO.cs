@@ -16,8 +16,10 @@ public class UdpIO : MonoBehaviour {
     private CarController _carController;
 
     private volatile bool connected;
-    private Thread udpThread;
+    private Thread udpReceiveThread;
     private const int listenPort = 11000;
+    private const int sendPort = 11002;
+    IPEndPoint sender;
     private volatile byte[] telemetry;
 
     UdpClient udpClient;
@@ -25,6 +27,7 @@ public class UdpIO : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+        Application.targetFrameRate = 30;
         acceleration = 0;
         steeringAngle = 0;
         _carController = CarRemoteControl.GetComponent<CarController>();
@@ -36,12 +39,24 @@ public class UdpIO : MonoBehaviour {
     void Update()
     {
         telemetry = GetTelemetry();
+        if (connected && telemetry != null && sender != null)
+        {
+            try
+            {
+                udpClient.Send(telemetry, telemetry.Length, sender);
+            }
+            catch (Exception)
+            {
+                // ignore
+            }
+            
+        }
 
     }
 
     public void OnDestroy()
     {
-        if (udpThread != null) { udpThread.Abort(); }
+        if (udpReceiveThread != null) { udpReceiveThread.Abort(); }
         udpClient.Close();
     }
 
@@ -52,30 +67,28 @@ public class UdpIO : MonoBehaviour {
 
     private void Connect()
     {
-        udpClient = new UdpClient(listenPort);
+        IPEndPoint ipLocalEndPoint = new IPEndPoint(IPAddress.Parse("0.0.0.0"), listenPort);
+        udpClient = new UdpClient(ipLocalEndPoint);
         connected = true;
-        udpThread = new Thread(RunUdpServer);
-        udpThread.Start(udpClient);
+        udpReceiveThread = new Thread(RunUdpServer);
+        udpReceiveThread.Start(udpClient);
     }
 
     public void Close()
     {
         connected = false;
+        udpClient.Close();
     }
 
     private void RunUdpServer(object obj)
     {
         UdpClient udpClient = (UdpClient)obj;
-        IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
+        sender = new IPEndPoint(IPAddress.Any, 0);
 
         while (connected)
         {
             byte[] dataIn = udpClient.Receive(ref sender);
             SetCarControl(dataIn);
-            if (telemetry != null)
-            {
-                udpClient.Send(telemetry, telemetry.Length, sender);
-            }
         }
         udpClient.Close();
     }

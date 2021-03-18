@@ -2,25 +2,36 @@ import socket
 import json
 import base64
 import cv2
+from numpy.core.fromnumeric import size
+from numpy.testing._private.utils import clear_and_catch_warnings
 from pynput import keyboard
 import numpy as np
 import base64
+import threading
+import time
+import signal
+import sys
 
-UDP_IP = "127.0.0.1"
+
+
+UDP_IP = "0.0.0.0"
 UDP_PORT = 11500
+UDP_SIM_IP = "0.0.0.0"
 UDP_SIM_PORT = 11000
 
 FPS = 30
-sock = socket.socket(socket.AF_INET, # Internet
-                        socket.SOCK_DGRAM) # UDP
-sock.bind((UDP_IP, UDP_PORT))
 
+img = None
 steering = 0.0
 throttle = 0.0
 
 run = True
-cv2.namedWindow('Remote Control', cv2.WINDOW_NORMAL)
-cv2.resizeWindow('Remote Control', 500, 300)
+
+
+
+def signal_handler(sig, frame):
+    global run
+    run = False
 
 def on_press(key):
     global steering, throttle
@@ -54,31 +65,54 @@ def on_release(key):
     except:
         pass
     
+def receive_image_thread(sock):
+    cv2.namedWindow('Remote Control', cv2.WINDOW_NORMAL)
+    cv2.resizeWindow('Remote Control', 400, 300)
+    while run:
+        try:
+            sock.settimeout(5)
+            data = sock.recv(30000)
+            data = json.loads(data)
+            print("Speed: {0}  Steering: {1}".format( data["speed"] ,data["steering_angle"]))
+            img_data = base64.b64decode(data["image"])
+            # print(sys.getsizeof(img_data))
+            nparr = np.fromstring(img_data, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_ANYCOLOR)
+            cv2.imshow('Remote Control',img)
+            cv2.waitKey(int(1000/60))
+            
+        except:
+            cv2.waitKey(int(1000/60))
+            pass
+        
+        
 
-listener = keyboard.Listener(
-    on_press=on_press,
-    on_release=on_release)
-listener.start()
+if __name__ == "__main__":
 
-while run:
-    message = {
-        "steering_angle" : steering,
-        "throttle": throttle
-    }
+    signal.signal(signal.SIGINT, signal_handler)
 
-    sendData = json.dumps(message).encode('utf-8')
-    sock.sendto(sendData, (UDP_IP, UDP_SIM_PORT))
+    sock = socket.socket(socket.AF_INET, # Internet
+                        socket.SOCK_DGRAM) # UDP
+    sock.bind((UDP_IP, UDP_PORT))
+    
+    listener = keyboard.Listener(
+        on_press=on_press,
+        on_release=on_release)
+    listener.start()
 
-    data, addr = sock.recvfrom(1024000)
-    data = json.loads(data)
-    print("Speed: {0}  Steering: {1}".format( data["speed"] ,data["steering_angle"]))
+    receive_thread = threading.Thread(target=receive_image_thread, args=(sock,))
+    receive_thread.start()
 
-    img_data = base64.b64decode(data["image"])
-    nparr = np.fromstring(img_data, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_ANYCOLOR)
-
-    cv2.imshow('Remote Control',img)
-    cv2.waitKey(int(1000/FPS))
-
-sock.close()
-cv2.destroyAllWindows()
+    while run:
+        message = {
+            "steering_angle" : steering,
+            "throttle": throttle
+        }
+        sendData = json.dumps(message).encode('utf-8')
+        # print(sendData)
+        sock.sendto(sendData, (UDP_SIM_IP, UDP_SIM_PORT))
+        # cv2.waitKey(int(1000/FPS))
+        time.sleep(1.0/FPS)
+        
+    sock.close()
+    cv2.destroyAllWindows()
