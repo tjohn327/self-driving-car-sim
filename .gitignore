@@ -241,3 +241,4 @@ InitTestScene*.unity
 !.vscode/extensions.json
 *.code-workspace
 
+controller/.vscode/settings.json

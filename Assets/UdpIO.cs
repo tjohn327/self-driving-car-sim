@@ -16,42 +16,104 @@ public class UdpIO : MonoBehaviour {
     private CarController _carController;
 
     private volatile bool connected;
+    private volatile bool received;
     private Thread udpReceiveThread;
     private const int listenPort = 11000;
     private const int sendPort = 11002;
     IPEndPoint sender;
-    private volatile byte[] telemetry;
+    //private volatile byte[] telemetry;
+    //private volatile byte[][] fragments;
 
     UdpClient udpClient;
+    private const int frameSize = 1100;
+    private const int headerSize = 4;
+    private const int payloadSize = frameSize - headerSize;
+
+    private UInt16 seq = 0;
 
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start () {
         Application.targetFrameRate = 30;
         acceleration = 0;
         steeringAngle = 0;
         _carController = CarRemoteControl.GetComponent<CarController>();
         connected = false;
+        received = false;
         Connect();
     }
 
     // Update is called once per frame
     void Update()
     {
-        telemetry = GetTelemetry();
-        if (connected && telemetry != null && sender != null)
+        var telemetry = GetTelemetry();        
+        if (received && connected && telemetry != null && sender != null)
         {
             try
             {
-                udpClient.Send(telemetry, telemetry.Length, sender);
+               // var fragments = FragmentTelemetry(telemetry);
+                /*for (int i = 0; i < fragments.Length; i++)
+                {
+                    udpClient.Send(fragments[i], fragments[i].Length, sender);
+                }*/
+
+                int size = telemetry.Length;
+                var count = (UInt16)(size + (payloadSize - 1)) / (payloadSize);
+                var bufferArray = new byte[count][];
+                //Debug.Log(seq);
+                for (var i = 0; i < count; i++)
+                {
+                    //bufferArray[i] = new byte[Math.Min(telemetryPayloadSize, ((size + 1) - (i * payloadSize)))];
+                    bufferArray[i] = new byte[frameSize];
+                    setHeader(seq, (UInt16)(count - i), bufferArray[i]);
+                    for (var j = 0; j < payloadSize && i * payloadSize + j < size; j++)
+                    {
+                        bufferArray[i][j + headerSize] = telemetry[(i * payloadSize) + j];
+                    }
+                    udpClient.Send(bufferArray[i], bufferArray[i].Length, sender);
+                }
+                if(seq >= 65534)
+                {
+                    seq = 0;
+                }
+                else
+                {
+                    seq++;
+                }
+
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // ignore
+                Debug.Log(ex.ToString());
+                //throw;
             }
+               
+
             
         }
 
+    }
+
+    private void setHeader(UInt16 seq, UInt16 frag, byte[] frame)
+    {
+        var seqBytes = getSeqBytes(seq);
+        var fragBytes = getSeqBytes(frag);
+        frame[0] = seqBytes[0];
+        frame[1] = seqBytes[1];
+        frame[2] = fragBytes[0];
+        frame[3] = fragBytes[1];
+    }
+
+    private byte[] getSeqBytes(UInt16 seq)
+    {
+        var bytes = BitConverter.GetBytes(seq);
+        if(BitConverter.IsLittleEndian)
+        {
+            var temp = bytes[0];
+            bytes[0] = bytes[1];
+            bytes[1] = temp;
+        }
+        return bytes;
     }
 
     public void OnDestroy()
@@ -77,6 +139,7 @@ public class UdpIO : MonoBehaviour {
     public void Close()
     {
         connected = false;
+        received = false;
         udpClient.Close();
     }
 
@@ -88,6 +151,7 @@ public class UdpIO : MonoBehaviour {
         while (connected)
         {
             byte[] dataIn = udpClient.Receive(ref sender);
+            received = true;
             SetCarControl(dataIn);
         }
         udpClient.Close();
@@ -110,6 +174,7 @@ public class UdpIO : MonoBehaviour {
 
     private byte[] GetTelemetry()
     {
+        /*
         Dictionary<string, string> data = new Dictionary<string, string>();
         data["steering_angle"] = _carController.CurrentSteerAngle.ToString("N4");
         data["throttle"] = _carController.AccelInput.ToString("N4");
@@ -117,7 +182,27 @@ public class UdpIO : MonoBehaviour {
         data["image"] = Convert.ToBase64String(CameraHelper.CaptureFrame(FrontFacingCamera));
         JSONObject json = new JSONObject(data);
         byte[] dataOut = Encoding.UTF8.GetBytes(json.ToString());
-        return dataOut;
+        return dataOut; */
+        return CameraHelper.CaptureFrame(FrontFacingCamera);
+    }
+
+    private byte[][] FragmentTelemetry(byte[] data)
+    {
+        int size = data.Length;
+        var count = (int) (size + (payloadSize - 1)) / (payloadSize);
+        var bufferArray = new byte[count][];
+        Debug.Log("Len " + data.Length + " " + count);
+        for (var i = 0; i < count; i++)
+        {
+            bufferArray[i] = new byte[Math.Min(frameSize, ((size+1) - (i * payloadSize)) )];
+            bufferArray[i][0] = (byte)i;
+            for (var j = 0; j < payloadSize && i * payloadSize + j < size; j++)
+            {
+               // Debug.Log(i * count + j);                
+                bufferArray[i][j+1] = data[(i * count) + j];
+            }
+        }        
+        return bufferArray;
     }
 }
 
