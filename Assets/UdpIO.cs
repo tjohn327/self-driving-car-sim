@@ -13,6 +13,8 @@ public class UdpIO : MonoBehaviour {
     public Camera FrontFacingCamera;
     private float acceleration;
     private float steeringAngle;
+    private float frame_time;
+    private int quality = 75;
     private CarController _carController;
 
     private volatile bool connected;
@@ -20,6 +22,8 @@ public class UdpIO : MonoBehaviour {
     private Thread udpReceiveThread;
     private const int listenPort = 11000;
     private const int sendPort = 11002;
+    private const float target_frame_time = 10; 
+    private const int fps = 30;
     IPEndPoint sender;
     //private volatile byte[] telemetry;
     //private volatile byte[][] fragments;
@@ -34,7 +38,7 @@ public class UdpIO : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        Application.targetFrameRate = 30;
+        Application.targetFrameRate = fps;
         acceleration = 0;
         steeringAngle = 0;
         _carController = CarRemoteControl.GetComponent<CarController>();
@@ -46,6 +50,7 @@ public class UdpIO : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
+        setQquality();
         var telemetry = GetTelemetry();        
         if (received && connected && telemetry != null && sender != null)
         {
@@ -58,9 +63,9 @@ public class UdpIO : MonoBehaviour {
                 }*/
 
                 int size = telemetry.Length;
-                var count = (UInt16)(size + (payloadSize - 1)) / (payloadSize);
+                var count = (UInt16)((size + (payloadSize - 1)) / (payloadSize));
                 var bufferArray = new byte[count][];
-                //Debug.Log(seq);
+                // Debug.Log(count);
                 for (var i = 0; i < count; i++)
                 {
                     //bufferArray[i] = new byte[Math.Min(telemetryPayloadSize, ((size + 1) - (i * payloadSize)))];
@@ -92,6 +97,14 @@ public class UdpIO : MonoBehaviour {
             
         }
 
+    }
+
+    private void setQquality()
+    {
+        if (frame_time >= target_frame_time) quality -= 5;
+        if(frame_time < target_frame_time/2) quality += 1;
+        if (quality < 5) quality = 5;
+        else if (quality > 75) quality = 75;
     }
 
     private void setHeader(UInt16 seq, UInt16 frag, byte[] frame)
@@ -165,6 +178,7 @@ public class UdpIO : MonoBehaviour {
             CarControlData control = JsonUtility.FromJson<CarControlData>(json);
             CarRemoteControl.SteeringAngle = control.steering_angle;
             CarRemoteControl.Acceleration = control.throttle;
+            frame_time = control.frame_time;
         }
         catch (Exception e)
         {
@@ -183,7 +197,7 @@ public class UdpIO : MonoBehaviour {
         JSONObject json = new JSONObject(data);
         byte[] dataOut = Encoding.UTF8.GetBytes(json.ToString());
         return dataOut; */
-        return CameraHelper.CaptureFrame(FrontFacingCamera);
+        return CameraHelper.CaptureFrame(FrontFacingCamera, quality);
     }
 
     private byte[][] FragmentTelemetry(byte[] data)
@@ -211,4 +225,5 @@ public class CarControlData
 {
     public float steering_angle;
     public float throttle;
+    public float frame_time;
 }

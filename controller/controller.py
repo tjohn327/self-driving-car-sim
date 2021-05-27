@@ -7,21 +7,24 @@ import threading, queue
 import time
 import signal
 import inputs
-import copy
 import sys
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 11500
-UDP_SIM_IP = "192.168.X.XXX"
+# UDP_SIM_IP = "192.168.1.106"
+# UDP_SIM_PORT = 11000
+UDP_SIM_IP = "192.168.1.151"
 UDP_SIM_PORT = 11800
 FRAME_SIZE = 1100
 HEADER_SIZE = 4
 FPS = 30
 
 imageQueue = queue.Queue()
+imageFragQueue = queue.Queue()
 img = None
 steering = 0.0
 throttle = 0.0
+frame_time = 20.0
 
 run = True
 
@@ -68,63 +71,80 @@ def on_release(key):
     except:
         pass
     
-def receive_image_thread(sock, imageQueue):
+def receive_image_thread(sock, imageFragQueue):
     global run
     print("Started receiving stream")    
-    currentIndex = 0
-    currentFrag = 0
-    image = b''
     while run:        
         try:
             sock.settimeout(2)
-            buf = sock.recv(FRAME_SIZE+1000)            
+            buf = sock.recv(FRAME_SIZE+100)  
+            imageFragQueue.put(buf)            
+        except Exception as ex:            
+            if str(ex) != "timed out":
+                # print(ex)
+                pass
+
+def image_process_thread(imageFragQueue):
+    global run, frame_time
+    print("Started processing stream")    
+    currentIndex = 0
+    currentFrag = 0
+    image = b''
+    startTime = 0
+    while run:        
+        try:
+            buf = imageFragQueue.get(timeout=2)        
             index = int.from_bytes(buf[0:2],"big")
             frag = int.from_bytes(buf[2:4],"big")
+            # print(frag)
             # print(index, frag, len(buf))
             if index == currentIndex:
                 currentFrag = frag
                 if frag > 1:
                     image += buf[HEADER_SIZE:]
                 if frag == 1:
-                    image += buf[HEADER_SIZE:]
+                    image += buf[HEADER_SIZE:] 
+                    frame_time = (time.time()-startTime)*1000           
                     imageQueue.put(image)
                     image = b''
                 
             if index != currentIndex:   
                 if currentFrag != 1:
-                    print("not complete")
+                    print("incomplete frame")
                     print(index, frag, len(buf))
-                currentIndex = index                
+                    frame_time = 20
+                startTime = time.time()
+                currentIndex = index     
+                # print(currentIndex, frag)           
                 image = b''
                 image += buf[HEADER_SIZE:]
             
         except Exception as ex:            
             if str(ex) != "timed out":
-                print(ex)
+                # print(ex)
+                pass
 
 def display_image_thread(imageQueue):
-    global run
+    global run, frame_time
     cv2.namedWindow('Remote Control', cv2.WINDOW_NORMAL)
     cv2.resizeWindow('Remote Control', 640 , 480)
     while run:        
         try:
-            image = imageQueue.get(timeout=1)
-            nparr = np.frombuffer(image, np.uint8)
+            image = imageQueue.get(timeout=2)
+            nparr = np.frombuffer(image, np.uint8)            
             img = cv2.imdecode(nparr, cv2.IMREAD_ANYCOLOR)
             cv2.imshow('Remote Control',img)
             cv2.waitKey(1)
         except Exception as ex:
+            frame_time = 10
             cv2.waitKey(1)
             print(ex)
         
 def scaleAxis(val, src = (-32768.0, 32767), dst = (-1.0, +1.0)):
-    """
-    Scale the given value from the scale of src to the scale of dst.
-    """
     return ((val - src[0]) / (src[1]-src[0])) * (dst[1]-dst[0]) + dst[0]  
 
 def handleJoystick(pads):
-    global run, throttle, steering
+    global run, throttle, steering, frame_time
     while run:
         if len(pads)>0:
             events = inputs.get_gamepad()
@@ -135,11 +155,10 @@ def handleJoystick(pads):
                 if event.code == "ABS_RZ":
                     throttle = scaleAxis(float(event.state),(0.0,255.0),(0.0,-1.0))
                 if event.code == "ABS_X":
-                    steering = scaleAxis(float(event.state))
+                    steering = scaleAxis(float(event.state))                
                 if event.code == "BTN_START":
                     run = False
                     print("Terminating...")
-
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigHandler)
@@ -153,9 +172,11 @@ if __name__ == "__main__":
         on_release=on_release)
     listener.start()
 
-    receive_thread = threading.Thread(target=receive_image_thread, args=(sock,imageQueue))
+    receive_thread = threading.Thread(target=receive_image_thread, args=(sock,imageFragQueue))
+    process_thread = threading.Thread(target=image_process_thread, args=(imageFragQueue,))
     image_thread = threading.Thread(target=display_image_thread, args=(imageQueue,))
     image_thread.start()
+    process_thread.start()
     receive_thread.start()
     
     pads = inputs.devices.gamepads
@@ -169,17 +190,18 @@ if __name__ == "__main__":
         try:
             message = {
                 "steering_angle" : steering,
-                "throttle": throttle
+                "throttle": throttle,
+                "frame_time": frame_time
             }
             sendData = json.dumps(message).encode('utf-8')
-            # print(sendData)
             sock.sendto(sendData, (UDP_SIM_IP, UDP_SIM_PORT))
-            # cv2.waitKey(int(1000/FPS))
             time.sleep(1.0/FPS)
         except:
             pass
+
     cv2.destroyAllWindows()
     receive_thread.join()
+    process_thread.join()
     image_thread.join()
     joystick_thread.join()
     
