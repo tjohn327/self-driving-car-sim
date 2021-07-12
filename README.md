@@ -23,7 +23,7 @@ steering_angle and throttle values ∈ [-1,1]
 
 ### Remote Control
 
-The python script [controller.py](./controller/controller.py) demonstrates a basic remote control using keyboard inputs or xbox controller. To use this script, first run the simulator, then run this script and use W, A, S & D keys to control the car in the simulator.
+The python script [controller.py](./controller/controller.py) demonstrates a basic remote control using keyboard inputs or xbox controller. 'CONTROL_SEND_IP' should be changed to the IP address of the car simulator. To use this script, first run the simulator, then run this script and use W, A, S & D keys to control the car in the simulator.
 
 ### Modifying the sim
 
