@@ -28,3 +28,7 @@ The python script [controller.py](./controller/controller.py) demonstrates a bas
 ### Modifying the sim
 
 To modify the sim please use Unity 2019.4 and Visual Studio 2017.
+
+### Binaries
+
+Binaries of the simulator can be found [here](https://github.com/tjohn327/self-driving-car-sim/releases)
