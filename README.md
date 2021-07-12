@@ -1,4 +1,4 @@
-## Driving Simulator for SCION multipath demo
+# Driving Simulator for SCION multipath demo
 
 This is a modified version of [Udacity Self driving car sim](https://github.com/udacity/self-driving-car-sim). Original [README](./README_ORG.md).
 
@@ -6,25 +6,16 @@ This is a modified version of [Udacity Self driving car sim](https://github.com/
 
 ### Control and telemetry
 
-The sim listens on 127.0.0.1:11500 for control message over UDP and sends telemetry message back.
+The sim listens on 0.0.0.0:11000 for control message over UDP and sends the front camera image back.
 
 Control message example:
 
 ```json
 {
    "steering_angle":0.9,
-   "throttle":0.8
-}
-```
-
-Telemetry message example:
-
-```json
-{
-   "steering_angle":25,
-   "throttle":1,
-   "speed":30,
-   "image":"image from front facing camera as base64 encoded string"
+   "throttle":0.8,
+   "reset": false, //resets the sim if true
+   "frame_time": 10 //time taken to receive last frame in milliseconds
 }
 ```
 
@@ -32,8 +23,8 @@ steering_angle and throttle values ∈ [-1,1]
 
 ### Remote Control
 
-The python script [controller.py](./controller/controller.py) demonstrates a basic remote control using keyboard inputs. To use this script, first run the simulator and select a track, then run this script and use W, A, S & D keys to control the car in the simulator.
+The python script [controller.py](./controller/controller.py) demonstrates a basic remote control using keyboard inputs or xbox controller. To use this script, first run the simulator, then run this script and use W, A, S & D keys to control the car in the simulator.
 
 ### Modifying the sim
 
-To modify the sim please use Unity 5.5.1f1 and Visual Studio 2015.
+To modify the sim please use Unity 2019.4 and Visual Studio 2017.

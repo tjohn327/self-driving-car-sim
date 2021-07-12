@@ -105,7 +105,7 @@ public class UISystem : MonoSingleton<UISystem> {
 
         if (Input.GetKeyDown(KeyCode.R))
         {
-            carController.Reset();
+            ToggleRecording();
         }
 
 		if (!isTraining) 

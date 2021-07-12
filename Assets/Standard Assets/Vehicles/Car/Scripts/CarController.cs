@@ -144,15 +144,7 @@ namespace UnityStandardAssets.Vehicles.Car
             m_MaxHandbrakeTorque = float.MaxValue;
 
             m_Rigidbody = GetComponent<Rigidbody> ();
-
             m_CurrentTorque = m_FullTorqueOverAllWheels - (m_TractionControl * m_FullTorqueOverAllWheels);
-
-        }
-
-        public void Reset()
-        {
-            string scene = SceneManager.GetActiveScene().name;
-            SceneManager.LoadScene(scene);
         }
 
         private void GearChanging ()
@@ -207,7 +199,7 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
         public void Update()
-        {                      
+        {
             if (IsRecording)
             {
                 //Dump();
@@ -520,7 +512,15 @@ namespace UnityStandardAssets.Vehicles.Car
             image = null;
             return path;
         }
+
+        public void Reset()
+        {
+            string scene = SceneManager.GetActiveScene().name;
+            SceneManager.LoadScene(scene);
+        }
     }
+
+   
 
     internal class CarSample
     {
